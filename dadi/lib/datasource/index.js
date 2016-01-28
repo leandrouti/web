@@ -143,6 +143,7 @@ Datasource.prototype.processDatasourceParameters = function (schema, uri) {
     {"count": (schema.datasource.count || 0)},
     {"skip": (schema.datasource.skip)},
     {"page": (schema.datasource.page || 1)},
+    {"referer": schema.datasource.referer|| {}},
     //{"search": schema.datasource.search},
     {"filter": schema.datasource.filter || {}},
     {"fields": schema.datasource.fields || {}},
@@ -179,6 +180,10 @@ Datasource.prototype.processRequest = function (datasource, req) {
   }
   else {
     delete this.schema.datasource.cache;
+  }
+
+  if (this.schema.datasource && req.headers && req.headers['referer']) {
+    this.schema.datasource.referer = req.headers['referer'];
   }
 
   // if the current datasource matches the page name
