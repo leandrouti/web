@@ -29,14 +29,16 @@ var DatasourceCache = function (datasource) {
   this.cache = cache();
   this.options = this.datasource.schema.datasource.caching || {};
 
-  // enabled if main cache module is enabled and this is not a static datasource
+    // enabled if main cache module is enabled and this is not a static datasource
   this.enabled = this.cache.enabled && this.datasource.source.type !== 'static';
 
-  // we build the filename with a hashed hex string so we can be unique
-  // and avoid using file system reserved characters in the name
-  this.filename = crypto.createHash('sha1').update(this.datasource.name).digest('hex') + '_' + crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
+  if (this.datasource.source.type !== 'static') {
+    // we build the filename with a hashed hex string so we can be unique
+    // and avoid using file system reserved characters in the name
+    this.filename = crypto.createHash('sha1').update(this.datasource.name).digest('hex') + '_' + crypto.createHash('sha1').update(this.datasource.endpoint).digest('hex');
 
-  this.setCachePath();
+    this.setCachePath();
+  }
 
   var self = this;
 };
@@ -57,6 +59,8 @@ DatasourceCache.prototype.setCachePath = function() {
 };
 
 DatasourceCache.prototype.cachingEnabled = function() {
+
+  if (this.datasource.source.type === 'static') return false;
 
   var enabled = this.enabled || false;
 

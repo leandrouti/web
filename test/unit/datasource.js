@@ -3,8 +3,10 @@ var sinon = require('sinon');
 var page = require(__dirname + '/../../dadi/lib/page');
 var datasource = require(__dirname + '/../../dadi/lib/datasource');
 var help = require(__dirname + '/../help');
+var libHelp = require(__dirname + '/../../dadi/lib/help');
 var log = require(__dirname + '/../../dadi/lib/log');
 var config = require(__dirname + '/../../config.js');
+var _ = require('underscore');
 
 describe('Datasource', function (done) {
   it('should export constructor', function (done) {
@@ -321,6 +323,117 @@ describe('Datasource', function (done) {
 
     done();
   });
+
+  describe('Static Datasource', function(done) {
+    it('DataHelper should not enable a datasource cache', function(done) {
+
+      var dsSchema = {
+        "datasource": {
+          "key": "testing",
+          "name": "nothing to see here",
+          "source": {
+            "type": "static",
+            "data": [
+              {"test": "hello world!"}
+            ]
+          },
+          "caching": {
+            "enabled": true,
+            "ttl": 1800,
+            "directory": "./cache/web/",
+            "extension": "json"
+          }
+        }
+      }
+
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      new datasource(null, 'test', {}, function(err, ds) {
+        var requestUrl = '/test'
+        var dataHelper = new libHelp.DataHelper(ds, requestUrl)
+
+        datasource.Datasource.prototype.loadDatasource.restore()
+
+        dataHelper.dataCache.enabled.should.eql(false)
+        done()
+      })
+
+    })
+
+    it('DataHelper should load the static data', function(done) {
+      var dsSchema = {
+        "datasource": {
+          "key": "testing",
+          "name": "nothing to see here",
+          "source": {
+            "type": "static",
+            "data": [
+              {"test": "hello world!"}
+            ]
+          },
+          "caching": {
+            "enabled": true,
+            "ttl": 1800,
+            "directory": "./cache/web/",
+            "extension": "json"
+          }
+        }
+      }
+
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      new datasource(null, 'test', {}, function(err, ds) {
+        var requestUrl = '/test'
+        var dataHelper = new libHelp.DataHelper(ds, requestUrl)
+        datasource.Datasource.prototype.loadDatasource.restore()
+
+        dataHelper.load(function(err, data) {
+          _.isArray(data).should.eql(true)
+          data.length.should.eql(1)
+          data[0].should.eql({'test':'hello world!'})
+          done()
+        })
+      })
+    })
+
+    it('DataHelper should return static data fields specified by the datasource config', function(done) {
+      var dsSchema = {
+        "datasource": {
+          "key": "testing",
+          "name": "nothing to see here",
+          "source": {
+            "type": "static",
+            "data": [
+              { "title": "world", "name": "John" },
+              { "title": "hello", "name": "Jane" }
+            ]
+          },
+          "caching": {
+            "enabled": true,
+            "ttl": 1800,
+            "directory": "./cache/web/",
+            "extension": "json"
+          },
+          "fields": { "title": 1 }
+        }
+      }
+
+      sinon.stub(datasource.Datasource.prototype, "loadDatasource").yields(null, dsSchema);
+
+      new datasource(null, 'test', {}, function(err, ds) {
+        var requestUrl = '/test'
+        var dataHelper = new libHelp.DataHelper(ds, requestUrl)
+        datasource.Datasource.prototype.loadDatasource.restore()
+
+        dataHelper.load(function(err, data) {
+          _.isArray(data).should.eql(true)
+          data.length.should.eql(2)
+          data[0].should.eql({'title':'world'})
+          done()
+        })
+      })
+    })
+  })
 
   describe('processDatasourceParameters', function(done) {
     it('should process sort parameter when it is an array', function (done) {

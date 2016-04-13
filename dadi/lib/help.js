@@ -351,25 +351,10 @@ module.exports.getToken = function () {
     },
     wallet: 'file',
     walletOptions: {
-      path: config.get('paths.tokenWallet') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
+      path: config.get('paths.tokenWallets') + '/' + this.generateTokenWalletFilename(config.get('api.host'), config.get('api.port'), config.get('auth.clientId'))
     }
   });
 }
-
-// creates a new function in the underscore.js namespace
-// allowing us to pluck multiple properties - used to return only the
-// fields we require from an array of objects
-_.mixin({selectFields: function() {
-        var args = _.rest(arguments, 1)[0];
-        return _.map(arguments[0], function(item) {
-            var obj = {};
-            _.each(args.split(','), function(arg) {
-                obj[arg] = item[arg];
-            });
-            return obj;
-        });
-    }
-});
 
 /**
  * Creates a new DataHelper for fetching data from datasource endpoints
@@ -385,7 +370,7 @@ var DataHelper = function(datasource, requestUrl) {
   this.options = {
     host: this.datasource.source.host || config.get('api.host'),
     port: this.datasource.source.port || config.get('api.port'),
-    path: url.parse(this.datasource.endpoint).path,
+    path: this.datasource.source.type === 'static' ? '/'  : url.parse(this.datasource.endpoint).path,
     method: 'GET',
     agent: this.keepAliveAgent()
   }
@@ -545,22 +530,34 @@ DataHelper.prototype.getStaticData = function(done) {
   var data = this.datasource.source.data;
 
   if (_.isArray(data)) {
-    var sortField = this.datasource.schema.datasource.sort.field;
-    var sortDir = this.datasource.schema.datasource.sort.order;
     var search = this.datasource.schema.datasource.search;
     var count = this.datasource.schema.datasource.count;
     var fields = this.datasource.schema.datasource.fields;
 
     if (search) data = _.where(data, search);
-    if (sortField) data = _.sortBy(data, sortField);
-    if (sortDir === 'desc') data = data.reverse();
-
     if (count) data = _.first(data, count);
-
-    if (fields) data = _.chain(data).selectFields(fields.join(",")).value();
+    if (fields) {
+      fields = _.map(fields, function(value, key) { if (value === 1) return key; })
+      data = _.chain(data).selectFields(fields.join(',')).value();
+    }
   }
 
   done(data);
 }
+
+// creates a new function in the underscore.js namespace
+// allowing us to pluck multiple properties - used to return only the
+// fields we require from an array of objects
+_.mixin({selectFields: function() {
+        var args = _.rest(arguments, 1)[0];
+        return _.map(arguments[0], function(item) {
+            var obj = {};
+            _.each(args.split(','), function(arg) {
+                obj[arg] = item[arg];
+            });
+            return obj;
+        });
+    }
+});
 
 module.exports.DataHelper = DataHelper;
