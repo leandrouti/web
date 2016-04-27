@@ -1,0 +1,29 @@
+{
+	"datasource": {
+    	"key": "books",
+    	"name": "Books datasource",
+        "caching": {
+            "enabled": true,
+            "ttl": 300,
+            "directory": "./cache/web/",
+            "extension": "json"
+        },
+        "source": {
+            "type": "external",
+            "endpoint": "1.1/statuses/user_timeline.json",
+            "provider": {
+                "provider": "twitter",
+                "key": "[APP_CONSUMER_KEY]",
+                "secret": "[APP_CONSUMER_SECRET]"
+            }
+        },
+        "auth": {
+            "key": "[USER_CONSUMER_KEY]",
+            "secret": "[USER_CONSUMER_SECRET]"
+        },  
+    	"paginate": true,
+    	"where": {
+            "count": 5
+        }
+    }
+}

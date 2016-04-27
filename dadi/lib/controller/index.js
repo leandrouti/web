@@ -296,8 +296,12 @@ Controller.prototype.loadData = function(req, res, data, done) {
         processSearchParameters(ds.schema.datasource.key, ds, req);
 
         help.timer.start('datasource: ' + ds.name);
-
-        var dataHelper = new help.DataHelper(ds, req.url);
+        var dataHelper;
+        if(ds.source.type === 'external') {
+          dataHelper = new help.ExternalDataHelper(ds, req.url);
+        } else {
+          dataHelper = new help.DataHelper(ds, req.url);
+        }
         dataHelper.load(function(err, result, dsResponse) {
           help.timer.stop('datasource: ' + ds.name);
           if (err) return done(err);

@@ -11,6 +11,7 @@ var _ = require('underscore');
 var perfy = require('perfy');
 var crypto = require('crypto');
 var zlib = require('zlib');
+var Purest = require('purest');
 
 var auth = require(__dirname + '/auth');
 var log = require(__dirname + '/log');
@@ -384,6 +385,28 @@ _.mixin({selectFields: function() {
     }
 });
 
+/**
+ * Creates a new External DataHelper for fetching data from external endpoints
+ * @class
+ */
+var ExternalDataHelper = function(datasource, requestUrl) {
+  this.datasource = _.clone(datasource);
+  this.external_purest = new Purest(this.datasource.source.provider);
+  this.options = {
+    endpoint: this.datasource.source.endpoint,
+    auth: this.datasource.auth
+    where: this.datasource.where || {}
+  };
+}
+
+ExternalDataHelper.prototype.load = function(done) {
+  this.external_purest.query()
+    .get(this.options.endpoint)
+    .auth(this.options.auth)
+    .where(this.options.where)
+    .request(done);
+}
+module.exports.ExternalDataHelper = ExternalDataHelper;
 /**
  * Creates a new DataHelper for fetching data from datasource endpoints
  * @class

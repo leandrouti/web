@@ -31,7 +31,7 @@ var Datasource = function (page, datasource, options, callback) {
     self.source = schema.datasource.source;
     self.schema.datasource.filter = self.schema.datasource.filter || {};
 
-    if (self.source.type === 'static') {
+    if (self.source.type === 'static' || self.source.type === 'external') {
       callback(null, self);
     }
 
